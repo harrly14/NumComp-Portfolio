@@ -1,6 +1,7 @@
 ---
 aliases:
-  - Newton-Raphson Method, Newton's
+  - Newton-Raphson Method
+  - Newton's
 linked_lectures: 2026-09-04
 ---
 Newton's method, also known as Newton-Raphson method, is a [[Rootfinding|rootfinding]] algorithm which progressively finds better and better approximations for the roots of a function. While significantly faster than the [[Bisection Method]], it requires a good initial guess and information about the derivative of the function.
