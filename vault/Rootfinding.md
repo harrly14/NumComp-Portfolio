@@ -17,6 +17,7 @@ Real world examples of rootfinding could be:
 | input of data                                                                                           | interpolant, or the line that goes through all the data                                             |
 All rootfinding algorithms trade off between speed, computational cost, and guarentee of successs.
 
-Some rootfinding algorithms we have covered:
+## Methods:
 - [[Bisection Method]]
 - [[Newton's method]]
+- [[Fixed-Point Iteration]]
