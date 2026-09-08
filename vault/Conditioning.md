@@ -1,7 +1,6 @@
 ---
 aliases:
   - conditioned
-  - conditioning
   - ill-conditioned
   - well-conditioned
 ---

@@ -2,7 +2,6 @@
 aliases:
   - stable
   - unstable
-  - stability
 ---
 Stability is a property of the algorithm, not the underlying math. If an algorithm is unstable, you can restructure it to make it stable.
 

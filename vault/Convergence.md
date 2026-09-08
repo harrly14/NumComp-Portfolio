@@ -1,7 +1,3 @@
----
-aliases:
-  - convergence
----
 A convergent [[Rootfinding|rootfinding]] algorithm produces a sequence of approximations $x_{k}$ that approach the true root $x^*$. For analysis, we define error at step $k$ as $e_{k}=x_{k} - x^*$.
 
 # q-linear convergence

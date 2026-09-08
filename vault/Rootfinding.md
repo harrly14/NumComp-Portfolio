@@ -1,7 +1,3 @@
----
-aliases:
-  - rootfinding
----
 Rootfinding is the computational process of finding a value $x$ such that a given function $f(x) = 0$. 
 
 Rootfinding is more important that finding where a graph crosses an axis, it also is a translator for solving equations. Almost any math problem or model can be rearranged into a rootfinding problem by moving all terms to one side of the equal sign. For example, to find where two curves intersect($g(x) = f(x)$), you can rewrite it as the rootfinding problem $f(x) - g(x) = 0$. 
