@@ -1,0 +1,1 @@
+Machine Epsilon, denoted as $\epsilon_{m}$, defines the physical limit of a computer's precision. It is the gap between the number 1 and the very next representable floating-point number. It represents the maximum possible relative error introduced by a single rounding operation in the computer's hardware.
