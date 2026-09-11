@@ -13,3 +13,4 @@ Core mathematical and algorithmic ideas used throughout numerical computation.
 
 - [[Mean Value Theorem]]
 - [[Taylor series]]
+- [[Fundamental Theorem of Algebra]]

@@ -20,3 +20,6 @@ A problem becomes highly ill-conditioned (large $\kappa$) under any of these cir
 - the derivative is huge
 - the input $x$ is huge
 - the output $f(x)$ is tiny (most common)
+
+# Conditioning and [[Rootfinding]]
+The conditioning of rootfinding depends on the problem's input representation, rather than just the function itself. A polynomial can be specified by its coefficients or by its roots, as can be seen easily in [[Wilkinson's polynomial]]. These two representations act as different inputs to the same problem, and the map from coefficients to roots can be much more ill-conditioned than the reverse. In particular, roots that are close to each other tend to make the rootfinding problem ill-conditioned. See the image in [[Wilkinson's polynomial]] for an example. 
