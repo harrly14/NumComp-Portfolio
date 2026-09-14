@@ -6,11 +6,11 @@ For linear or quadratic equations, we have exact algebraic formulas, but for com
 
 Real world examples of rootfinding could be: 
 
-| Forward model `f`                                                                                       | Rootfinding application                                                                             |
-| ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Position of a ball after it is thrown                                                                   | How to throw the ball to hit the target (what angle and force to throw it)                          |
-| Nitrogen soil cycling: a time series of nitrogen in a plot as it stabilizes and reaches an equiplibrium | Using a target stable nitrogen level, find what initial inputs would stabilize at that target level |
-| input of data                                                                                           | interpolant, or the line that goes through all the data                                             |
+| Forward model `f`                                                                                      | Rootfinding application                                                                             |
+| ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| Position of a ball after it is thrown                                                                  | How to throw the ball to hit the target (what angle and force to throw it)                          |
+| Nitrogen soil cycling: a time series of nitrogen in a plot as it stabilizes and reaches an equilibrium | Using a target stable nitrogen level, find what initial inputs would stabilize at that target level |
+| input of data                                                                                          | interpolant, or the line that goes through all the data                                             |
 All rootfinding algorithms trade off between speed, computational cost, and guarentee of successs.
 
 ## Methods:
