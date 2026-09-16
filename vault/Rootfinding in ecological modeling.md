@@ -4,7 +4,7 @@ The below writeup refer's to the research of my friend and colleague, Logan Jone
 (image is blurry/unreadable due to file size constraints. sorry!)
 
 # Stability, stability, and stability
-Logan's poster points at two different meanings of stability distinct from the definition of [[Stability|numerical stability]] we learned in class. Directly in the poster, he referrences "structural stability," and he alludes to another concept of stability called "dynamical stability" often used in the field of ecological modelling. These three definitions are each distinct, but also similar.[^1]
+Logan's poster points at two different meanings of stability distinct from the definition of [[Stability|numerical stability]] we learned in class. Directly in the poster, he referrences "structural stability," and he alludes to another concept of stability called "dynamical stability" often used in the field of ecological modeling. These three definitions are each distinct, but also similar.[^1]
 
 To understand what those other uses of stability meant, I looked into how stability is discussed in ecological modeling. What I learned was that ecological literature distinguishes between perturbing the state of a system, such as species abundances, and perturbing the parameters or conditions under which the system exists.[^2] This distinction helped me separate dynamical and structural stability from the numerical stability we have talked about in class.
 
