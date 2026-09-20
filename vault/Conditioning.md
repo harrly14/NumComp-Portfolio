@@ -15,7 +15,7 @@ If a problem is ill-conditioned, no algorithm can fix it. You cannot code your w
 # Measuring conditioning
 Absolute condition number ($\hat{\kappa}$): if $f(x)$ is differentiable, this is simply the derivative. Otherwise, we use the limit definition of the derivative at that point
 
-Relative condition number ($\kappa$): Because [[Floating-Point Arithmetic]] relies on relative accuracy, this is the more useful metric. It scale the absolute condition number by the inputs and outputs $$\kappa = |f'(x)| \left| \frac{x}{f(x)} \right|$$
+Relative condition number ($\kappa$): Because [[Floating-Point Arithmetic]] relies on relative accuracy, this is the more useful metric. It scales the absolute condition number by the inputs and outputs $$\kappa = |f'(x)| \left| \frac{x}{f(x)} \right|$$
 A problem becomes highly ill-conditioned (large $\kappa$) under any of these circumstances:
 - the derivative is huge
 - the input $x$ is huge

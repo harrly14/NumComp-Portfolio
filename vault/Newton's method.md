@@ -31,12 +31,12 @@ At the root, $f(x^*) = 0$, so $g'(x) = 0$. From the Taylor Series, we had:
 
 $$e_{k+1} = g'(x^*)e_{k} + \frac{1}{2}g''(x^*)e^{2}_{k}+\dots$$
 
-We can see that because the first derivative of $g$ at $x^*$ is $0$, the entire first term dissapears. The remaining terms are dominated by the $e^2_{k}$ term as $h$ gets small (recall the distinction to numerical computation's [[Big-O]] notation). Thus, Newton's Method is locally **q-quadratic convergence**.
+We can see that because the first derivative of $g$ at $x^*$ is $0$, the entire first term disappears. The remaining terms are dominated by the $e^2_{k}$ term as $h$ gets small (recall the distinction to numerical computation's [[Big-O]] notation). Thus, Newton's Method is locally **q-quadratic convergence**.
 
 
 # Vulnerabilities
 How well this algorithm converges relies heavily on the first guess we use and the function's shape. It can fail if:
 -  $f'(x^*)$ is close to 0 (flat spots), the tangent line intercepts the x-axis very far away from $x_{0}$, causing our next guess to be very different. This is further reinforced by the math above, because in out calculation of $g'(x^*)$, if $f'(x^*)$ is close to $0$, the whole equation blows up and breaks. This rootfinding  problem is [[Conditioning|ill-conditioned]] near shallow curves, making the algorithm [[Stability|unstable]].
-- Certain initial guesses for some functions can cause the algorithm to bounce back and forth between two points indefinitely without every converging
+- Certain initial guesses for some functions can cause the algorithm to bounce back and forth between two points indefinitely without ever converging
 - If the function is a parabola resting on the x-axis, that means the root is where both $f(x) = 0$ and $f'(x) = 0$. In these cases, the derivative in the denominator approaches 0 along with the numerator, slowing the algorithm.
 - When a root has another root very close to it, Newton's convergence degrades from quadratic to linear, and the iteration can stall before getting to [[Machine Epsilon]] precision. This is because the underlying rootfinding problem is [[Conditioning|ill-conditioned]] as roots cluster. 

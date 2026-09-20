@@ -11,6 +11,15 @@ Core mathematical and algorithmic ideas used throughout numerical computation.
 
 ## Mathematical tools
 
-- [[Mean Value Theorem]]
-- [[Taylor series]]
+- [[Mean value Theorem]]
+- [[Taylor Series]]
 - [[Fundamental Theorem of Algebra]]
+
+## Linear algebra
+
+- [[Inner product]]
+- [[Norm]]
+- [[Orthogonality]]
+- [[Gram-Schmidt Orthogonalization]]
+- [[QR Factorization]]
+- [[Vandermonde matrix]]
