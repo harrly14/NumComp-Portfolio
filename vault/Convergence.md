@@ -1,4 +1,4 @@
-A convergent [[Rootfinding|rootfinding]] algorithm produces a sequence of approximations $x_{k}$ that approach the true root $x^*$. For analysis, we define error at step $k$ as $e_{k}=x_{k} - x^*$.
+A convergent rootfinding algorithm produces a sequence of approximations $x_{k}$ that approach the true root $x^*$. For analysis, we define error at step $k$ as $e_{k}=x_{k} - x^*$.
 
 # q-linear convergence
 An iterative algorithm is q-linearly convergent if the ratio of successive errors approaches a constant factor less than 1. That is: 

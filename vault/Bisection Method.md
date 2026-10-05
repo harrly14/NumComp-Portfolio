@@ -2,7 +2,7 @@
 aliases:
   - bisection
 ---
-A [[Rootfinding|rootfinding]] technique that uses the Intermediate Value Theorem and does not require derivative information
+A rootfinding technique that uses the Intermediate Value Theorem and does not require derivative information
 
 # The algorithm
 Start with an interval `[a,b]` where the function crosses the x-axis somewhere in the interval. Calculate the midpoint $\frac{a+b}{2} = c$ and check the sign of $f(c)$. Replace $a$ or $b$ depending on which on shares the same sign as $f(c)$ with the new point $c$. Repeat until the interval is smaller than a tolerance.

@@ -21,7 +21,7 @@ Structural stability is particularly important for Logan's project and is define
 | structural stability | environmental parameters                    | viable community structure or coexistence         |
 All three of these ideas involve a robustness against change, but the thing that is being changed is different. This distinction is important as structural stability is not just numerical stability applied to ecology. 
 # Seasonal limit cycles as a rootfinding problem
-Part of Logan's research project involved first simulating an ecological community until its densities reached a certain stable cycle called a limit cycle. This problem can be viewed as a [[Rootfinding]] problem. [^1]
+Part of Logan's research project involved first simulating an ecological community until its densities reached a certain stable cycle called a limit cycle. This problem can be viewed as a rootfinding problem. [^1]
 
 Call the entire state of a community $x_k$ at some point in time $k$. A function $f(x)$ could represent the community one season later. When a stable season cycle is reached, $f(x^*) = x^*$. If we set $g(x) = f(x) - x$, we get $g(x) = 0$ when a stable season cycle is reached, which is rootfinding!
 

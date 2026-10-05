@@ -1,7 +1,7 @@
 ---
 aliases:
 ---
-Fixed-point iteration is an open [[Rootfinding|rootfinding]] technique that turns a standard equation $f(x) = 0$ into the form $x = g(x)$. A "fixed point" is a value that remains exactly the same after the function $g$ is applied to it. If you can find the fixed point of $g(x)$, you have simultaneously found the root of $f(x)$. 
+Fixed-point iteration is an open rootfinding technique that turns a standard equation $f(x) = 0$ into the form $x = g(x)$. A "fixed point" is a value that remains exactly the same after the function $g$ is applied to it. If you can find the fixed point of $g(x)$, you have simultaneously found the root of $f(x)$. 
 
 # The algorithm
 Rearrange you original equation $f(x) = 0$ to isolate $x$ on one side, defining your new function $g(x)$. Note that there are algebraically infinite ways to do this, but choosing the right one dictates if your algorithm succeeds or not. Take an initial guess $x_{0}$ to get your next guess via $x_{k+1} = g(x_{k})$. Repeat until $x_{k+1}$ and $x_{k}$ are identical, or until you reach a stopping criteria.
