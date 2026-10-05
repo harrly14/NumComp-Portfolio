@@ -25,4 +25,4 @@ $$
 $$
 
 # Role in Numerical Computation
-Householder QR is [[Stability|backward stable]] because aech step is an orthogonal transformation. As such, it is the fix for the instability seen in [[Gram-Schmidt Orthogonalization|Gram-Schmidt]], at the cost of no longer building $Q$ as you go.
+Householder QR is [[Stability|backward stable]] because each step is an orthogonal transformation. As such, it is the fix for the instability seen in [[Gram-Schmidt Orthogonalization|Gram-Schmidt]], at the cost of no longer building $Q$ as you go.
