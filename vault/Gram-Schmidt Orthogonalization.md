@@ -26,4 +26,4 @@ Describes when each column's contribution gets computed. Left-looking looks back
 Right-looking organization does operations over many remaining columns at once, providing more parallelism and being more efficient in cases where you have all the vectors from the start.
 
 # Role in Numerical Computation
-Applying this to the columns of a matrix $A$ one at a time is exactly how you build the [[QR Factorization]]. 
+Applying this to the columns of a matrix $A$ one at a time is exactly how you build the [[QR Factorization]]. The same idea, applied to the sequence $q_1, Aq_1, Aq_2, \dots$ instead of the columns of a fixed matrix, gives [[Arnoldi iteration]].
