@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lagrange interpolation</title>
+<style>
+:root {
+  --bg: #161618; --axis: #8a8a8a; --grid: rgba(255,255,255,.07); --text: #e6e6e6; --muted: #8f8f8f;
+  --pointfill: #f2f2f2; --btn: rgba(255,255,255,.08); --btnhover: rgba(255,255,255,.16);
+  --c0: #58C4DD; --c1: #FFF44F; --c2: #83C167; --c3: #FC6255;
+  --p: #F0AC5F; --sum: #5CD0B3; --ghost: #9a9a9a;
+}
+:root[data-theme="light"] {
+  --bg: #faf8f8; --axis: #6f6f6f; --grid: rgba(0,0,0,.07); --text: #222; --muted: #777;
+  --pointfill: #fff; --btn: rgba(0,0,0,.06); --btnhover: rgba(0,0,0,.13);
+  --c0: #58C4DD; --c1: #FFF44F; --c2: #83C167; --c3: #FC6255;
+  --p: #F0AC5F; --sum: #5CD0B3; --ghost: #8a8a8a;
+}
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
+body { display: flex; flex-direction: column; font: 14px system-ui, sans-serif; outline: none; }
+#stage { flex: 1; min-height: 0; }
+svg { width: 100%; height: 100%; display: block; touch-action: manipulation; }
+svg text { font-family: "Latin Modern Math", "STIX Two Math", "Cambria Math", Georgia, serif; font-style: italic; fill: var(--text); pointer-events: none; }
+svg text.tick { font-size: 14px; fill: var(--muted); font-style: normal; }
+svg .curve { fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+#bar { padding: 4px 10px 8px; display: flex; flex-direction: column; gap: 4px; }
+#row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+#scene { flex: 1 1 140px; min-width: 0; font-family: "Latin Modern Math", "STIX Two Math", "Cambria Math", Georgia, serif; font-size: 16px; color: var(--muted); padding: 0 4px; }
+button { min-width: 36px; height: 36px; padding: 0 8px; border: 0; border-radius: 8px; background: var(--btn); color: var(--text); cursor: pointer; font: inherit; display: inline-flex; align-items: center; justify-content: center; }
+button:hover:not(:disabled) { background: var(--btnhover); }
+button:disabled { opacity: .4; cursor: default; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--p); outline-offset: 2px; }
+button svg { width: 16px; height: 16px; fill: currentColor; }
+#seek { width: 100%; height: 36px; margin: 0; accent-color: var(--p); cursor: pointer; }
+</style>
+</head>
+<body tabindex="0">
+<div id="stage"><svg id="svg" viewBox="0 0 800 440" preserveAspectRatio="xMidYMid meet"></svg></div>
+<div id="bar">
+  <div id="row">
+    <button id="prev" title="Previous scene (←)" aria-label="Previous scene"><svg viewBox="0 0 16 16"><path d="M3 2h2v12H3zM14 2v12L6 8z"/></svg></button>
+    <button id="play" title="Play / pause (Space)" aria-label="Play"></button>
+    <button id="next" title="Next scene (→)" aria-label="Next scene"><svg viewBox="0 0 16 16"><path d="M11 2h2v12h-2zM2 2l8 6-8 6z"/></svg></button>
+    <button id="replay" title="Replay" aria-label="Replay"><svg viewBox="0 0 16 16"><path d="M8 2a6 6 0 1 0 5.7 7.9h-2.1A4 4 0 1 1 8 4c1 0 1.9.4 2.6 1L8.5 7.2H14V1.7l-1.9 1.9A6 6 0 0 0 8 2z"/></svg></button>
+    <span id="scene" aria-live="polite"></span>
+  </div>
+  <input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Animation progress">
+</div>
+<script>
+"use strict";
+/* ============ MATH ============ */
+const NG = 300, MARGIN = 0.25;
+const X = [0, 1, 2.5, 4], Y = [1, 3, 2, 2.5];
+let ts = [], Ls = [], Ss = [], P = [], Partials = [], yMin = 0, yMax = 1;
+
+function basis(i, t) {
+  let v = 1;
+  for (let j = 0; j < X.length; j++) if (j !== i) v *= (t - X[j]) / (X[i] - X[j]);
+  return v;
+}
+// Sample every curve on one shared grid. The y-range is only (re)computed when asked.
+function recompute(setRange) {
+  const a = Math.min(...X) - MARGIN, b = Math.max(...X) + MARGIN;
+  ts = Array.from({ length: NG }, (_, k) => a + (b - a) * k / (NG - 1));
+  Ls = X.map((_, i) => ts.map(t => basis(i, t)));
+  Ss = Ls.map((l, i) => l.map(v => v * Y[i]));
+  Partials = [];
+  let acc = new Array(NG).fill(0);
+  Ss.forEach(s => { acc = acc.map((v, k) => v + s[k]); Partials.push(acc); });
+  P = ts.map(t => Y.reduce((s, y, i) => s + y * basis(i, t), 0));
+  console.assert(P.every((v, k) => Math.abs(v - Partials[Partials.length - 1][k]) < 1e-9), "final partial sum != p");
+  if (setRange) {
+    const all = [0, 1, ...Y, ...P, ...Ls.flat(), ...Ss.flat(), ...Partials.flat()];
+    const lo = Math.min(...all), hi = Math.max(...all), pad = (hi - lo) * 0.07;
+    yMin = lo - pad; yMax = hi + pad;
+  }
+}
+const lerpArr = (a, b, s) => a.map((v, k) => (1 - s) * v + s * b[k]);   // the one morph primitive
+const lerp = (a, b, s) => (1 - s) * a + s * b;
+const clamp01 = x => Math.min(1, Math.max(0, x));
+
+/* ============ EASING ============ */
+// Manim's rate_functions.smooth
+function smooth(t) {
+  const sig = x => 1 / (1 + Math.exp(-x)), err = sig(-5);
+  return clamp01((sig(10 * (t - 0.5)) - err) / (1 - 2 * err));
+}
+function backOut(t) { const c1 = 1.7, c3 = c1 + 1; return t <= 0 ? 0 : Math.max(0, 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2)); }
+
+/* ============ SCENE STATE + TIMELINE ============ */
+// `st` is the whole visual state. render(T) rebuilds it from scratch by running every started
+// scene in order, so scrubbing in any direction is exact.
+let st;
+function freshState() {
+  return {
+    axes: 0, pts: X.map(() => 0),
+    p: { draw: 0, op: 0, label: 0 }, ghost: 0, pulse: 0,
+    terms: X.map(() => ({ show: false, draw: 0, mix: 0, op: 1, marks: 0, line: 0, label: 0 })),
+    sum: { ys: null, op: 0, k: -1 }, formula: 0
+  };
+}
+const SUB = "₀₁₂₃₄₅₆₇₈₉";
+const scenes = [];
+function add(name, dur, hold, update) { scenes.push({ name, dur, hold, update }); }
+
+add("Axes", 1.2, 0.2, e => { st.axes = e; });
+add("Data points", 1.6, 0.3, (e, u) => {
+  X.forEach((_, i) => { st.pts[i] = backOut(clamp01((u - i * 0.2) / 0.4)); });
+});
+add("The interpolating polynomial p(t)", 1.8, 0.4, e => {
+  st.p.draw = e; st.p.op = 1; st.p.label = clamp01((e - 0.7) / 0.3);
+});
+add("p(t) becomes the target", 1.0, 0.3, e => {
+  st.p.op = 1 - e; st.p.label = 1 - e; st.ghost = e;
+});
+X.forEach((_, i) => {
+  const T = () => st.terms[i];
+  add(`Basis polynomial L${SUB[i]}: 1 at x${SUB[i]}, 0 elsewhere`, 1.3, 0.25, e => {
+    Object.assign(T(), { show: true, draw: e, marks: e, line: e, label: clamp01((e - 0.6) / 0.4) });
+  });
+  add(`Scaling L${SUB[i]} by y${SUB[i]}`, 1.3, 0.2, e => {
+    Object.assign(T(), { show: true, draw: 1, marks: 1, line: 1 - e, label: 1, mix: e });
+  });
+  add(`y${SUB[i]}L${SUB[i]} settles`, 0.6, 0, e => {
+    Object.assign(T(), { show: true, draw: 1, mix: 1, line: 0, marks: 1 - e, label: 1 - e, op: 1 - 0.6 * e });
+  });
+});
+add("Summing: start with y₀L₀", 1.0, 0.2, e => {
+  st.sum.ys = Partials[0]; st.sum.op = e; st.sum.k = 0; st.terms[0].op = 0.4 * (1 - e);
+});
+X.forEach((_, k) => {
+  if (k === 0) return;
+  add(`Adding y${SUB[k]}L${SUB[k]} to the sum`, 1.1, k === X.length - 1 ? 0.4 : 0.1, e => {
+    st.sum.ys = lerpArr(Partials[k - 1], Partials[k], e); st.sum.op = 1;
+    st.sum.k = e > 0.5 ? k : k - 1; st.terms[k].op = 0.4 * (1 - e);
+  });
+});
+add("Reveal: the sum is p(t)", 2.0, 1.2, (e, u) => {
+  st.sum.ys = Partials[X.length - 1];
+  const pulse = Math.sin(Math.PI * clamp01(u / 0.4)), cross = smooth(clamp01((u - 0.4) / 0.4));
+  st.pulse = pulse; st.p.draw = 1; st.p.op = cross; st.sum.op = 1 - cross;
+  st.formula = smooth(clamp01((u - 0.6) / 0.4));
+});
+let TOTAL = 0;
+scenes.forEach(s => { s.start = TOTAL; TOTAL += s.dur + s.hold; s.end = TOTAL; });
+
+let T = 0;
+function sceneIndex(t) { let k = 0; scenes.forEach((s, i) => { if (t >= s.start) k = i; }); return k; }
+
+function render() {
+  st = freshState();
+  for (const s of scenes) {
+    if (T < s.start) break;
+    const u = clamp01((T - s.start) / s.dur);
+    s.update(smooth(u), u);
+  }
+  draw();
+  updateUI();
+}
+
+/* ============ RENDERING ============ */
+const NS = "http://www.w3.org/2000/svg";
+const M = { l: 44, r: 22, t: 20, b: 36 };
+let W = 800, H = 440, FS = 20;   // viewBox size follows the container so text stays readable on phones
+const sx = t => M.l + (t - ts[0]) / (ts[NG - 1] - ts[0]) * (W - M.l - M.r);
+const sy = v => H - M.b - (v - yMin) / (yMax - yMin) * (H - M.t - M.b);
+const svg = document.getElementById("svg");
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  (parent || svg).appendChild(e);
+  return e;
+}
+const pathD = ys => { let d = ""; for (let k = 0; k < NG; k++) d += (k ? "L" : "M") + sx(ts[k]).toFixed(1) + " " + sy(ys[k]).toFixed(1); return d; };
+const COL = i => `var(--c${i})`;
+const subs = n => String(n).split("").map(c => SUB[+c]).join("");
+
+// text with optional subscripts: parts like ["L", {sub:"i"}, "(t)"]
+function setLabel(t, parts, size) {
+  t.textContent = "";
+  parts.forEach(p => {
+    if (typeof p === "string") { el("tspan", {}, t).textContent = p; return; }
+    el("tspan", { dy: 5, "font-size": size * 0.7 }, t).textContent = p.sub;
+    el("tspan", { dy: -5 }, t).textContent = "​";
+  });
+}
+function makeLabel(parts, color, anchor, size) {
+  size = size || FS;
+  const t = el("text", { "text-anchor": anchor || "start", "font-size": size });
+  if (color) t.style.fill = color;
+  setLabel(t, parts, size);
+  return t;
+}
+const termParts = (i, scaled) => (scaled ? ["y", { sub: i }] : []).concat(["L", { sub: i }, "(t)"]);
+
+// --- build the static DOM once ---
+const R = {};   // references to the elements draw() updates
+function build() {
+  svg.innerHTML = "";
+  const defs = el("defs", {}, svg);
+  el("rect", { x: M.l, y: 0, width: W - M.l - M.r + 4, height: H - M.b + 6 }, el("clipPath", { id: "plotclip" }, defs));
+  R.axes = el("g", {});
+  const t0 = ts[0], t1 = ts[NG - 1];
+  for (let v = Math.ceil(yMin); v <= yMax; v++)
+    el("line", { x1: sx(t0), x2: sx(t1), y1: sy(v), y2: sy(v), stroke: "var(--grid)", "stroke-width": 1 }, R.axes);
+  X.forEach(x => el("line", { x1: sx(x), x2: sx(x), y1: sy(yMax), y2: sy(yMin), stroke: "var(--grid)", "stroke-width": 1 }, R.axes));
+  el("line", { x1: sx(t0), x2: sx(t1), y1: sy(0), y2: sy(0), stroke: "var(--axis)", "stroke-width": 1.5, "stroke-linecap": "round" }, R.axes);
+  el("line", { x1: sx(t0), x2: sx(t0), y1: sy(yMax), y2: sy(yMin), stroke: "var(--axis)", "stroke-width": 1.5, "stroke-linecap": "round" }, R.axes);
+  X.forEach(x => { el("text", { x: sx(x), y: sy(0) + 18, "text-anchor": "middle", class: "tick" }, R.axes).textContent = x; });
+  for (let v = Math.ceil(yMin); v <= yMax; v++) {
+    if (v === 0 || v < 0 || v > Math.max(...Y)) continue;
+    el("text", { x: sx(t0) - 8, y: sy(v) + 5, "text-anchor": "end", class: "tick" }, R.axes).textContent = v;
+  }
+  el("text", { x: sx(t0) - 8, y: sy(0) + 5, "text-anchor": "end", class: "tick" }, R.axes).textContent = 0;
+
+  const clip = el("g", { "clip-path": "url(#plotclip)" });
+  R.ghost = el("path", { class: "curve", stroke: "var(--ghost)", "stroke-width": 2, "stroke-dasharray": "6 6" }, clip);
+  R.terms = X.map((_, i) => {
+    const g = el("g", {}, clip), o = {};
+    o.line = el("line", { x1: sx(t0), x2: sx(t1), y1: sy(1), y2: sy(1), stroke: COL(i), "stroke-dasharray": "4 6", "stroke-width": 1.5 }, g);
+    o.path = el("path", { class: "curve", stroke: COL(i), pathLength: 1 }, g);
+    o.marks = X.map((x, j) => j === i
+      ? el("circle", { cx: sx(x), fill: COL(i) }, g)
+      : el("circle", { cx: sx(x), cy: sy(0), fill: "var(--bg)", stroke: COL(i), "stroke-width": 2.5 }, g));
+    return o;
+  });
+  R.sum = el("path", { class: "curve", stroke: "var(--sum)", pathLength: 1 }, clip);
+  R.p = el("path", { class: "curve", stroke: "var(--p)", pathLength: 1 }, clip);
+  R.pts = X.map((x, i) => el("circle", { cx: sx(x), fill: "var(--pointfill)", stroke: COL(i), "stroke-width": 3 }));
+  R.termLabels = X.map((x, i) => {
+    const anchor = i === X.length - 1 ? "end" : "start";
+    return [makeLabel(termParts(i, false), COL(i), anchor), makeLabel(termParts(i, true), COL(i), anchor)];
+  });
+  R.pLabel = makeLabel(["p(t)"], "var(--p)", "end");
+  R.sumLabel = makeLabel([""], "var(--sum)", "start"); sumKShown = -2;
+  R.formula = makeLabel(["p(t) = Σ y", { sub: "i" }, "L", { sub: "i" }, "(t)"], "var(--p)", "start", FS + 2);
+}
+
+function setDraw(path, ys, draw, op) {
+  path.setAttribute("d", pathD(ys));
+  path.setAttribute("stroke-dasharray", draw >= 0.999 ? "none" : "1 2");
+  path.setAttribute("stroke-dashoffset", 1 - draw);
+  path.setAttribute("opacity", draw <= 0.001 ? 0 : op);
+}
+let sumKShown = -2;
+function draw() {
+  R.axes.setAttribute("opacity", st.axes);
+  X.forEach((x, i) => {
+    R.pts[i].setAttribute("cy", sy(Y[i])); R.pts[i].setAttribute("r", 6.5 * st.pts[i]);
+  });
+
+  setDraw(R.p, P, st.p.draw, st.p.op);
+  R.ghost.setAttribute("d", pathD(P));
+  R.ghost.setAttribute("opacity", st.ghost * (0.6 + 0.4 * st.pulse));
+  R.ghost.setAttribute("stroke-width", 2 + 2.5 * st.pulse);
+  const pi = NG - 38;
+  R.pLabel.setAttribute("x", sx(ts[pi]) - 4); R.pLabel.setAttribute("y", sy(P[pi]) - 14);
+  R.pLabel.setAttribute("opacity", st.p.label);
+
+  st.terms.forEach((t, i) => {
+    const o = R.terms[i];
+    const ys = lerpArr(Ls[i], Ss[i], t.mix);
+    setDraw(o.path, ys, t.show ? t.draw : 0, t.op);
+    const dotV = lerp(1, Y[i], t.mix);
+    o.line.setAttribute("opacity", 0.35 * t.line);
+    o.marks.forEach((c, j) => {
+      c.setAttribute("opacity", Math.min(1, t.marks * 2));
+      c.setAttribute("r", (j === i ? 6.5 : 5) * t.marks);
+      if (j === i) c.setAttribute("cy", sy(dotV));
+    });
+    const [l0, l1] = R.termLabels[i];
+    const lx = sx(X[i]) + (i === X.length - 1 ? -14 : 14), ly = sy(dotV) - 14;
+    [l0, l1].forEach(l => { l.setAttribute("x", lx); l.setAttribute("y", ly); });
+    l0.setAttribute("opacity", t.label * (1 - clamp01(t.mix * 2))); l1.setAttribute("opacity", t.label * clamp01(t.mix * 2 - 1));
+  });
+
+  if (st.sum.ys) setDraw(R.sum, st.sum.ys, 1, st.sum.op); else R.sum.setAttribute("opacity", 0);
+  if (st.sum.k !== sumKShown) {
+    sumKShown = st.sum.k;
+    const parts = [];
+    for (let i = 0; i <= Math.max(0, st.sum.k); i++) { if (i) parts.push(" + "); parts.push(...termParts(i, true)); }
+    setLabel(R.sumLabel, parts, FS);
+  }
+  const lx = sx(ts[0]) + 14, ly = M.t + 24;
+  R.sumLabel.setAttribute("x", lx); R.sumLabel.setAttribute("y", ly);
+  R.sumLabel.setAttribute("opacity", st.sum.op * (1 - st.formula));
+  R.formula.setAttribute("x", lx); R.formula.setAttribute("y", ly); R.formula.setAttribute("opacity", st.formula);
+}
+
+/* ============ PLAYER + CONTROLS ============ */
+const $ = id => document.getElementById(id);
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const PLAY_ICON = '<svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z"/></svg>', PAUSE_ICON = '<svg viewBox="0 0 16 16"><path d="M3 2h4v12H3zM9 2h4v12H9z"/></svg>';
+let playing = false, raf = 0, lastNow = 0, userPaused = false, scrubbing = false;
+
+function tick(now) {
+  if (!playing) return;
+  T = Math.min(TOTAL, T + Math.min(0.1, (now - lastNow) / 1000)); lastNow = now;
+  if (T >= TOTAL) playing = false;
+  render();
+  if (playing) raf = requestAnimationFrame(tick);
+}
+function play() {
+  if (T >= TOTAL - 1e-6) T = 0;
+  playing = true; userPaused = false; lastNow = performance.now();
+  cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); updateUI();
+}
+function pause() { playing = false; cancelAnimationFrame(raf); updateUI(); }
+function seek(t) { T = Math.min(TOTAL, Math.max(0, t)); render(); }
+function stepScene(dir) {
+  const i = sceneIndex(T), s = scenes[i];
+  if (reduced) {                       // jump between end-states, no tweening
+    if (dir > 0) seek(T < s.end - 1e-6 ? s.end : (scenes[i + 1] || s).end);
+    else seek(i > 0 ? scenes[i - 1].end : 0);
+    return;
+  }
+  if (dir > 0) seek(i + 1 < scenes.length ? scenes[i + 1].start : TOTAL);
+  else seek(T - s.start > 0.4 || i === 0 ? s.start : scenes[i - 1].start);
+}
+function togglePlay() { if (playing) { userPaused = true; pause(); } else play(); }
+
+function updateUI() {
+  $("play").innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+  $("play").setAttribute("aria-label", playing ? "Pause" : "Play");
+  if (!scrubbing) $("seek").value = Math.round(T / TOTAL * 1000);
+  $("scene").textContent = (!playing && T <= scenes[0].end + 1e-6) ? "Press play to begin" : scenes[sceneIndex(T)].name;
+}
+
+$("play").onclick = togglePlay;
+$("prev").onclick = () => stepScene(-1);
+$("next").onclick = () => stepScene(1);
+$("replay").onclick = () => { seek(0); play(); };
+const seekEl = $("seek");
+seekEl.addEventListener("pointerdown", () => { scrubbing = true; seekEl._was = playing; pause(); });
+seekEl.addEventListener("input", () => { seek(seekEl.value / 1000 * TOTAL); });
+const endScrub = () => { if (!scrubbing) return; scrubbing = false; if (seekEl._was && T < TOTAL) play(); };
+seekEl.addEventListener("pointerup", endScrub); seekEl.addEventListener("pointercancel", endScrub);
+
+document.addEventListener("keydown", e => {
+  const tag = e.target.tagName;
+  if (e.code === "Space" && tag !== "BUTTON" && tag !== "INPUT") { e.preventDefault(); togglePlay(); }
+  else if (e.code === "ArrowRight" && tag !== "INPUT") { e.preventDefault(); stepScene(1); }
+  else if (e.code === "ArrowLeft" && tag !== "INPUT") { e.preventDefault(); stepScene(-1); }
+});
+
+// Pause when scrolled away; resume on return only if it was running (never autoplays from the start).
+let autoPaused = false;
+new IntersectionObserver(entries => {
+  const vis = entries[entries.length - 1].isIntersecting;
+  if (vis) { if (autoPaused && !userPaused && T < TOTAL) play(); autoPaused = false; }
+  else if (playing) { autoPaused = true; pause(); }
+}, { threshold: 0.5 }).observe(document.body);
+
+/* ============ THEMING ============ */
+const PARENT_HTML = (() => { try { return window.parent.document.documentElement; } catch (e) { return null; } })();
+const applyTheme = t => document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+const queryTheme = new URLSearchParams(location.search).get("theme");
+const parentTheme = () => PARENT_HTML && window.parent !== window ? PARENT_HTML.getAttribute("saved-theme") : null;
+applyTheme(queryTheme || parentTheme() || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
+if (!queryTheme && PARENT_HTML && window.parent !== window) {
+  const sync = () => applyTheme(parentTheme());
+  const mo = new MutationObserver(sync); mo.observe(PARENT_HTML, { attributes: true, attributeFilter: ["saved-theme"] });
+  const onChange = e => applyTheme(e.detail && e.detail.theme);
+  window.parent.document.addEventListener("themechange", onChange);
+  // Quartz's SPA navigation destroys this iframe; don't leave listeners on the parent.
+  addEventListener("pagehide", () => { mo.disconnect(); window.parent.document.removeEventListener("themechange", onChange); });
+} else if (!queryTheme) {
+  matchMedia("(prefers-color-scheme: light)").addEventListener("change", e => applyTheme(e.matches ? "light" : "dark"));
+}
+
+/* ============ INIT ============ */
+function layout() {
+  const r = $("stage").getBoundingClientRect();
+  if (r.width < 10 || r.height < 10) return false;
+  const w = Math.round(Math.min(800, Math.max(340, r.width))), h = Math.round(w * r.height / r.width);
+  if (w === W && h === H && R.axes) return false;
+  W = w; H = Math.max(260, h); FS = W < 520 ? 16 : 20;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  return true;
+}
+recompute(true);
+layout(); build();
+T = scenes[0].end;   // open on the finished axes; the rest plays when the reader presses play
+render();
+new ResizeObserver(() => { if (layout()) { build(); render(); } }).observe($("stage"));
+</script>
+</body>
+</html>
