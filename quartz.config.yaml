@@ -7,7 +7,7 @@ configuration:
   analytics:
     provider: plausible
   locale: en-US
-  baseUrl: harrly14.github.io/NumComp-Portfolio
+  baseUrl: sully-harrer.github.io/NumComp-Portfolio
   ignorePatterns:
     - private
     - templates
@@ -221,7 +221,7 @@ plugins:
     enabled: false
     options:
       links:
-        GitHub: https://github.com/harrly14
+        GitHub: https://github.com/sully-harrer
     layout:
       position: footer
       priority: 50
